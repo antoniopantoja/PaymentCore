@@ -1,0 +1,39 @@
+# Build artifacts
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.pdb
+
+# Visual Studio
+.vs/
+*.csproj.user
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# Docker
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+
+# Secrets
+appsettings.Production.json
+*.pfx

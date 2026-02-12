@@ -1,0 +1,353 @@
+### ==============================================
+### Caso #1: Operações Básicas de Crédito e Débito
+### ==============================================
+
+### 1. Crédito: Depósito inicial de R$ 1000,00
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "credit",
+  "account_id": "ACC-001",
+  "amount": 100000,
+  "currency": "BRL",
+  "reference_id": "TXN-001",
+  "metadata": {
+    "description": "Depósito inicial"
+  }
+}
+
+### 2. Débito: Saque de R$ 200,00 (deve ser aprovado)
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "debit",
+  "account_id": "ACC-001",
+  "amount": 20000,
+  "currency": "BRL",
+  "reference_id": "TXN-002",
+  "metadata": {
+    "description": "Débito aprovado"
+  }
+}
+
+### 3. Débito: Tentativa de saque de R$ 900,00 (deve falhar - saldo insuficiente)
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "debit",
+  "account_id": "ACC-001",
+  "amount": 90000,
+  "currency": "BRL",
+  "reference_id": "TXN-003",
+  "metadata": {
+    "description": "Saldo insuficiente"
+  }
+}
+
+### ==============================================
+### Caso #2: Operações com Limite de Crédito
+### ==============================================
+
+### 4. Criar conta ACC-002 com limite de crédito de R$ 500,00
+POST http://localhost:5009/api/accounts
+Content-Type: application/json
+
+{
+  "externalId": "ACC-002",
+  "creditLimit": 500
+}
+
+### 5. Crédito: R$ 300,00
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "credit",
+  "account_id": "ACC-002",
+  "amount": 30000,
+  "currency": "BRL",
+  "reference_id": "TXN-CREDIT-001",
+  "metadata": {
+    "description": "Depósito inicial"
+  }
+}
+
+### 6. Débito: R$ 600,00 (deve ter sucesso usando limite de crédito)
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "debit",
+  "account_id": "ACC-002",
+  "amount": 60000,
+  "currency": "BRL",
+  "reference_id": "TXN-DEBIT-001",
+  "metadata": {
+    "description": "Usou limite de crédito"
+  }
+}
+
+### 7. Débito: R$ 300,00 (deve falhar - excedeu limite)
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "debit",
+  "account_id": "ACC-002",
+  "amount": 30000,
+  "currency": "BRL",
+  "reference_id": "TXN-DEBIT-002",
+  "metadata": {
+    "description": "Excedeu limite"
+  }
+}
+
+### ==============================================
+### Caso #3: Reserva e Captura
+### ==============================================
+### Cenário: Operação de reserva seguida de captura
+
+### 8. Criar conta ACC-RESERVE
+POST http://localhost:5009/api/accounts
+Content-Type: application/json
+
+{
+  "externalId": "ACC-RESERVE",
+  "creditLimit": 0
+}
+
+### 9. Crédito: R$ 1000,00 → Saldo Disponível: R$ 1000,00 | Saldo Reservado: R$ 0,00
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "credit",
+  "account_id": "ACC-RESERVE",
+  "amount": 100000,
+  "currency": "BRL",
+  "reference_id": "TXN-RESERVE-CREDIT",
+  "metadata": {
+    "description": "Depósito inicial"
+  }
+}
+
+### 10. Reserva: R$ 300,00 → Saldo Disponível: R$ 700,00 | Saldo Reservado: R$ 300,00
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "reserve",
+  "account_id": "ACC-RESERVE",
+  "amount": 30000,
+  "currency": "BRL",
+  "reference_id": "TXN-RESERVE-HOLD",
+  "metadata": {
+    "description": "Reserva para pagamento"
+  }
+}
+
+### 11. Captura: R$ 300,00 → Saldo Disponível: R$ 700,00 | Saldo Reservado: R$ 0,00
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "capture",
+  "account_id": "ACC-RESERVE",
+  "amount": 30000,
+  "currency": "BRL",
+  "reference_id": "TXN-RESERVE-CAPTURE",
+  "metadata": {
+    "description": "Captura da reserva"
+  }
+}
+
+### ==============================================
+### Caso #4: Transferência Entre Contas
+### ==============================================
+### Cenário: Transferência entre duas contas do mesmo cliente
+
+### 12. Garantir que ACC-001 existe (criar se necessário)
+POST http://localhost:5009/api/accounts
+Content-Type: application/json
+
+{
+  "externalId": "ACC-001-TRANSFER",
+  "creditLimit": 0
+}
+
+### 13. Garantir que ACC-002 existe (usar a do caso #2 ou criar)
+POST http://localhost:5009/api/accounts
+Content-Type: application/json
+
+{
+  "externalId": "ACC-002-TRANSFER",
+  "creditLimit": 0
+}
+
+### 14. Crédito em ACC-001: R$ 1000,00
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "credit",
+  "account_id": "ACC-001-TRANSFER",
+  "amount": 100000,
+  "currency": "BRL",
+  "reference_id": "TXN-TRANSFER-SETUP",
+  "metadata": {
+    "description": "Saldo inicial para transferência"
+  }
+}
+
+### 15. Transferência: R$ 500,00 de ACC-001 para ACC-002 (success)
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "transfer",
+  "account_id": "ACC-001-TRANSFER",
+  "target_accOperações com Falha e Retry
+### ==============================================
+### Cenário: Simulação de falha na publicação de eventos
+### NOTA: O sistema implementa retry automático com backoff exponencial
+### As transações podem ter 3 tentativas:
+### - Tentativa 1: pode falhar
+### - Tentativa 2: retry com backoff
+### - Tentativa 3: sucesso após retry
+
+### 16. Criar conta para teste de resiliência
+POST http://localhost:5009/api/accounts
+Content-Type: application/json
+
+{
+  "externalId": "ACC-RETRY",
+  "creditLimit": 0
+}
+
+### 17. Crédito com retry (Tentativa 1, 2 e 3)
+### O sistema irá processar e publicar eventos automaticamente
+### Se houver falha na publicação de eventos, o sistema faz retry
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "credit",
+  "account_id": "ACC-RETRY",
+  "amount": 50000,
+  "currency": "BRL",
+  "reference_id": "TXN-RETRY-TEST",
+  "metadata": {
+    "description": "Crédito com retry automático"
+  }
+}
+
+### 18. Verificar status da transação
+### Status possíveis: success, failed, pending
+GET http://localhost:5009/api/transactions/{{transaction_id}}
+
+### NOTA: Para forçar falhas e testar retry, você precisaria:
+### 1. Modificar InMemoryEventPublisher para simular falhas
+### 2. Usar um EventPublisher real (RabbitMQ, Kafka) e desconectá-lo temporariamente
+### 3. O sistema já tem EventProcessorBackgroundService que processa eventos em fila
+  "operation": "reversal",
+  "account_id": "ACC-005",
+  "amount": 50000,
+  "currency": "BRL",
+  "reference_id": "TXN-REVERSAL-002",
+  "original_transaction_id": "<TRANSACTION_ID>",
+  "metadata": {
+    "description": "Estorno de crédito"
+  }
+}
+
+### ==============================================
+### Caso #6: Estorno (Reversal)
+### ==============================================
+
+### 19. Criar conta ACC-REVERSAL
+POST http://localhost:5009/api/accounts
+Content-Type: application/json
+
+{
+  "externalId": "ACC-REVERSAL",
+  "creditLimit": 0
+}
+
+### 20. Crédito: R$ 500,00
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "credit",
+  "account_id": "ACC-REVERSAL",
+  "amount": 50000,
+  "currency": "BRL",
+  "reference_id": "TXN-REVERSAL-CREDIT",
+  "metadata": {
+    "description": "Crédito para estornar"
+  }
+}
+
+### 21. Estorno: Reverter a transação anterior
+### ATENÇÃO: Substitua <TRANSACTION_ID> pelo transaction_id retornado acima
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "reversal",
+  "account_id": "ACC-REVERSAL",
+  "amount": 50000,
+  "currency": "BRL",
+  "reference_id": "TXN-REVERSAL-REVERSE",
+  "original_transaction_id": "<TRANSACTION_ID>",
+  "metadata": {
+    "description": "Estorno de crédito"
+  }
+}
+
+### ==============================================
+### Caso #7: Teste de Idempotência
+### ==============================================
+
+### 22. Primeira tentativa
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "credit",
+  "account_id": "ACC-001",
+  "amount": 10000,
+  "currency": "BRL",
+  "reference_id": "TXN-IDEMPOTENT",
+  "metadata": {
+    "description": "Teste de idempotência"
+  }
+}
+
+### 23. Segunda tentativa (mesma reference_id) - deve retornar a mesma transação
+POST http://localhost:5009/api/transactions
+Content-Type: application/json
+
+{
+  "operation": "credit",
+  "account_id": "ACC-001",
+  "amount": 10000,
+  "currency": "BRL",
+  "reference_id": "TXN-IDEMPOTENT",
+  "metadata": {
+    "description": "Teste de idempotência - repetido"
+  }
+}
+
+### ==============================================
+### Consultas
+### ==============================================
+
+### Consultar conta por ID
+GET http://localhost:5009/api/accounts/{{account_id}}
+
+### Consultar transação por ID
+GET http://localhost:5009/api/transactions/{{transaction_id}}

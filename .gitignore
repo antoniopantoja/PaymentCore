@@ -1,0 +1,46 @@
+# Build artifacts
+bin/
+obj/
+out/
+
+# User/IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test artifacts
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local environment/config secrets
+.env
+.env.*
+appsettings.Development.local.json
+appsettings.Local.json
+
+# Entity Framework local DB files
+*.mdf
+*.ldf
+
+# Temporary files
+*.tmp
+*.temp
+~$*
